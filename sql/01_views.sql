@@ -4,17 +4,17 @@
 -- 
 -- 前提:
 --   BigQuery プロジェクト内に以下のテーブルが存在すること
---   - `{PROJECT_ID}.{DATASET}.projects_master`
---   - `{PROJECT_ID}.{DATASET}.cost_records`
---   - `{PROJECT_ID}.{DATASET}.cash_in_schedules`
---   - `{PROJECT_ID}.{DATASET}.real_estate_properties`
---   - `{PROJECT_ID}.{DATASET}.facility_operations`
---   - `{PROJECT_ID}.{DATASET}.saas_metrics`
---   - `{PROJECT_ID}.{DATASET}.area_indicators`
+--   - `{kawata-dx-poc}.{kawata_dx_cockpit}.projects_master`
+--   - `{kawata-dx-poc}.{kawata_dx_cockpit}.cost_records`
+--   - `{kawata-dx-poc}.{kawata_dx_cockpit}.cash_in_schedules`
+--   - `{kawata-dx-poc}.{kawata_dx_cockpit}.real_estate_properties`
+--   - `{kawata-dx-poc}.{kawata_dx_cockpit}.facility_operations`
+--   - `{kawata-dx-poc}.{kawata_dx_cockpit}.saas_metrics`
+--   - `{kawata-dx-poc}.{kawata_dx_cockpit}.area_indicators`
 --
 -- 使い方:
 --   1. BigQuery コンソールで新しいクエリを開く
---   2. {PROJECT_ID} と {DATASET} を実際の値に置換する
+--   2. {kawata-dx-poc} と {kawata_dx_cockpit} を実際の値に置換する
 --   3. 各 CREATE VIEW 文を個別に実行する
 --
 -- =============================================================================
@@ -24,10 +24,10 @@
 -- ビュー 1: 工事別 原価サマリー
 -- 各工事の確定原価・見込み原価・実効原価率を統合算出する
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE VIEW `{PROJECT_ID}.{DATASET}.vw_project_cost_summary` AS
+CREATE OR REPLACE VIEW `{kawata-dx-poc}.{kawata_dx_cockpit}.vw_project_cost_summary` AS
 WITH cost_agg AS (
   SELECT
-    project_id,
+    kawata-dx-poc,
     -- 確定原価
     SUM(CASE WHEN status = '確定請求' THEN amount_kpy ELSE 0 END) AS confirmed_cost,
     -- 見込み原価（口頭発注 + 現場見込み）
@@ -43,11 +43,11 @@ WITH cost_agg AS (
     COUNT(*) AS record_count,
     COUNT(CASE WHEN status = '確定請求' THEN 1 END) AS confirmed_count,
     COUNT(CASE WHEN status IN ('現場見込み', '口頭発注') THEN 1 END) AS forecast_count
-  FROM `{PROJECT_ID}.{DATASET}.cost_records`
-  GROUP BY project_id
+  FROM `{kawata-dx-poc}.{kawata_dx_cockpit}.cost_records`
+  GROUP BY kawata-dx-poc
 )
 SELECT
-  p.project_id,
+  p.kawata-dx-poc,
   p.project_name,
   p.division,
   p.client_type,
@@ -83,15 +83,15 @@ SELECT
     WHEN SAFE_DIVIDE(COALESCE(c.total_cost, 0), p.contract_amount_kpy) * 100 >= p.target_cost_rate * 0.95 THEN '🟡 注意'
     ELSE '🟢 正常'
   END AS risk_level
-FROM `{PROJECT_ID}.{DATASET}.projects_master` p
-LEFT JOIN cost_agg c ON p.project_id = c.project_id;
+FROM `{kawata-dx-poc}.{kawata_dx_cockpit}.projects_master` p
+LEFT JOIN cost_agg c ON p.kawata-dx-poc = c.kawata-dx-poc;
 
 
 -- ---------------------------------------------------------------------------
 -- ビュー 2: 月別キャッシュフロー予測
 -- 全社の月別入金予定と出金予定を統合し、資金残高推移を算出する
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE VIEW `{PROJECT_ID}.{DATASET}.vw_cashflow_forecast` AS
+CREATE OR REPLACE VIEW `{kawata-dx-poc}.{kawata_dx_cockpit}.vw_cashflow_forecast` AS
 WITH monthly_inflow AS (
   -- 入金予定の月別集計
   SELECT
@@ -99,7 +99,7 @@ WITH monthly_inflow AS (
     SUM(expected_amount_kpy) AS expected_inflow,
     SUM(CASE WHEN status = '入金済' THEN COALESCE(actual_amount_kpy, expected_amount_kpy) ELSE 0 END) AS actual_inflow,
     COUNT(*) AS inflow_count
-  FROM `{PROJECT_ID}.{DATASET}.cash_in_schedules`
+  FROM `{kawata-dx-poc}.{kawata_dx_cockpit}.cash_in_schedules`
   GROUP BY deposit_month
 ),
 monthly_outflow AS (
@@ -110,7 +110,7 @@ monthly_outflow AS (
     SUM(CASE WHEN status = '確定請求' THEN amount_kpy ELSE 0 END) AS confirmed_outflow,
     SUM(CASE WHEN status IN ('現場見込み', '口頭発注') THEN amount_kpy ELSE 0 END) AS forecast_outflow,
     COUNT(*) AS outflow_count
-  FROM `{PROJECT_ID}.{DATASET}.cost_records`
+  FROM `{kawata-dx-poc}.{kawata_dx_cockpit}.cost_records`
   GROUP BY payment_due_month
 )
 SELECT
@@ -140,7 +140,7 @@ ORDER BY month;
 -- ビュー 3: エリア別まちづくりROI
 -- 建設事業・不動産事業・施設運営の収益をエリア単位で統合し、ROIを算出する
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE VIEW `{PROJECT_ID}.{DATASET}.vw_area_roi` AS
+CREATE OR REPLACE VIEW `{kawata-dx-poc}.{kawata_dx_cockpit}.vw_area_roi` AS
 WITH construction_by_area AS (
   -- 建設事業: project_nameの先頭に市町名が含まれている前提
   SELECT
@@ -155,7 +155,7 @@ WITH construction_by_area AS (
     SUM(contract_amount_kpy) AS construction_revenue_kpy,
     COUNT(*) AS project_count,
     AVG(progress_rate) AS avg_progress
-  FROM `{PROJECT_ID}.{DATASET}.projects_master`
+  FROM `{kawata-dx-poc}.{kawata_dx_cockpit}.projects_master`
   GROUP BY 1
 ),
 real_estate_by_area AS (
@@ -172,7 +172,7 @@ real_estate_by_area AS (
     SUM(acquisition_cost_kpy) AS total_acquisition_cost_kpy,
     AVG(occupancy_rate) AS avg_occupancy_rate,
     COUNT(*) AS property_count
-  FROM `{PROJECT_ID}.{DATASET}.real_estate_properties`
+  FROM `{kawata-dx-poc}.{kawata_dx_cockpit}.real_estate_properties`
   GROUP BY 1
 ),
 facility_by_area AS (
@@ -187,7 +187,7 @@ facility_by_area AS (
     SUM(revenue_kpy) AS facility_revenue_kpy,
     SUM(operating_profit_kpy) AS facility_profit_kpy,
     SUM(visitors) AS total_visitors
-  FROM `{PROJECT_ID}.{DATASET}.facility_operations`
+  FROM `{kawata-dx-poc}.{kawata_dx_cockpit}.facility_operations`
   GROUP BY 1
 ),
 area_data AS (
@@ -202,7 +202,7 @@ area_data AS (
     AVG(land_price_index) AS avg_land_price_index,
     AVG(population) AS avg_population,
     AVG(foot_traffic) AS avg_foot_traffic
-  FROM `{PROJECT_ID}.{DATASET}.area_indicators`
+  FROM `{kawata-dx-poc}.{kawata_dx_cockpit}.area_indicators`
   GROUP BY 1
 )
 SELECT
@@ -236,7 +236,7 @@ FULL OUTER JOIN area_data a ON COALESCE(c.area, r.area, f.area) = a.area;
 -- ビュー 4: 全社経営ダッシュボードサマリー
 -- 事業部別の主要KPIをワンビューに集約する
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE VIEW `{PROJECT_ID}.{DATASET}.vw_company_dashboard` AS
+CREATE OR REPLACE VIEW `{kawata-dx-poc}.{kawata_dx_cockpit}.vw_company_dashboard` AS
 WITH construction_kpi AS (
   SELECT
     '建設事業' AS business_unit,
@@ -244,7 +244,7 @@ WITH construction_kpi AS (
     SUM(contract_amount_kpy) AS revenue_kpy,
     COUNT(*) AS count_metric,
     AVG(progress_rate) AS avg_metric
-  FROM `{PROJECT_ID}.{DATASET}.projects_master`
+  FROM `{kawata-dx-poc}.{kawata_dx_cockpit}.projects_master`
   GROUP BY division
 ),
 real_estate_kpi AS (
@@ -254,7 +254,7 @@ real_estate_kpi AS (
     SUM(monthly_rental_income_kpy) * 12 AS revenue_kpy,
     COUNT(*) AS count_metric,
     AVG(occupancy_rate) AS avg_metric
-  FROM `{PROJECT_ID}.{DATASET}.real_estate_properties`
+  FROM `{kawata-dx-poc}.{kawata_dx_cockpit}.real_estate_properties`
 ),
 facility_kpi AS (
   SELECT
@@ -263,7 +263,7 @@ facility_kpi AS (
     SUM(revenue_kpy) AS revenue_kpy,
     SUM(visitors) AS count_metric,
     SAFE_DIVIDE(SUM(operating_profit_kpy), SUM(revenue_kpy)) * 100 AS avg_metric
-  FROM `{PROJECT_ID}.{DATASET}.facility_operations`
+  FROM `{kawata-dx-poc}.{kawata_dx_cockpit}.facility_operations`
 ),
 saas_kpi AS (
   SELECT
@@ -272,7 +272,7 @@ saas_kpi AS (
     SUM(mrr_kpy) AS revenue_kpy,
     MAX(customers) AS count_metric,
     AVG(churn_rate_pct) AS avg_metric
-  FROM `{PROJECT_ID}.{DATASET}.saas_metrics`
+  FROM `{kawata-dx-poc}.{kawata_dx_cockpit}.saas_metrics`
   GROUP BY product
 )
 SELECT * FROM construction_kpi
@@ -288,10 +288,10 @@ SELECT * FROM saas_kpi;
 -- ビュー 5: AI原価予測用 特徴量テーブル
 -- 機械学習モデルの学習・推論に使用する特徴量を事前算出する
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE VIEW `{PROJECT_ID}.{DATASET}.vw_ml_features` AS
+CREATE OR REPLACE VIEW `{kawata-dx-poc}.{kawata_dx_cockpit}.vw_ml_features` AS
 WITH project_costs AS (
   SELECT
-    project_id,
+    kawata-dx-poc,
     SUM(amount_kpy) AS total_cost,
     SUM(CASE WHEN status = '確定請求' THEN amount_kpy ELSE 0 END) AS confirmed_cost,
     SUM(CASE WHEN status IN ('現場見込み', '口頭発注') THEN amount_kpy ELSE 0 END) AS forecast_cost,
@@ -302,11 +302,11 @@ WITH project_costs AS (
     COUNT(*) AS cost_record_count,
     COUNT(CASE WHEN status = '確定請求' THEN 1 END) AS confirmed_count,
     COUNT(CASE WHEN status IN ('現場見込み', '口頭発注') THEN 1 END) AS forecast_count
-  FROM `{PROJECT_ID}.{DATASET}.cost_records`
-  GROUP BY project_id
+  FROM `{kawata-dx-poc}.{kawata_dx_cockpit}.cost_records`
+  GROUP BY kawata-dx-poc
 )
 SELECT
-  p.project_id,
+  p.kawata-dx-poc,
   -- ターゲット変数: 実績原価率
   SAFE_DIVIDE(c.total_cost, p.contract_amount_kpy) * 100 AS actual_cost_rate,
   -- 特徴量: 工事属性
@@ -335,6 +335,7 @@ SELECT
   c.cost_record_count,
   c.confirmed_count,
   c.forecast_count
-FROM `{PROJECT_ID}.{DATASET}.projects_master` p
-LEFT JOIN project_costs c ON p.project_id = c.project_id
+FROM `{kawata-dx-poc}.{kawata_dx_cockpit}.projects_master` p
+LEFT JOIN project_costs c ON p.kawata-dx-poc = c.kawata-dx-poc
 WHERE c.total_cost IS NOT NULL;
+
