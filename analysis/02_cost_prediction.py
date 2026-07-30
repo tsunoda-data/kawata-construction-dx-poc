@@ -25,38 +25,12 @@ from sklearn.metrics import (mean_squared_error, mean_absolute_error,
                              f1_score, confusion_matrix)
 from sklearn.preprocessing import OneHotEncoder
 
-# =====================================================
-# 日本語フォントセットアップ（Google Colab 文字化け対策）
-# =====================================================
-def setup_japanese_font():
-    """
-    Google Colab環境で日本語フォントを正しく表示するための設定。
-    japanize-matplotlib をインストールし、フォントキャッシュをリフレッシュする。
-    """
-    # Step 1: japanize-matplotlib のインストール
-    try:
-        import japanize_matplotlib
-    except ImportError:
-        print("📦 japanize-matplotlib をインストール中...")
-        subprocess.check_call(
-            [sys.executable, '-m', 'pip', 'install', '-q', 'japanize-matplotlib']
-        )
-        import japanize_matplotlib
 
-    # Step 2: フォントキャッシュのリフレッシュ（これが文字化けの主な原因）
-    fm._load_fontmanager(try_read_cache=False)
-
-    # Step 3: マイナス記号の文字化け防止
-    plt.rcParams['axes.unicode_minus'] = False
-
-    print("✅ 日本語フォント設定完了")
-
-setup_japanese_font()
 
 # --- Google Colab & BigQuery 設定 ---
 # 以下の変数を実際の環境に合わせて変更してください
-PROJECT_ID = 'your-project-id'  # ← ここを変更
-DATASET = 'kawata_dx_poc'       # ← ここを変更
+PROJECT_ID = 'kawata-dx-poc'      # ← GCPプロジェクトID
+DATASET = 'kawata_dx_cockpit'     # ← BigQueryデータセット名
 
 try:
     # Google Colab環境の判定
@@ -78,10 +52,6 @@ except Exception as e:
     bq_available = False
     print(f"BigQuery認証エラー: {e}")
 
-# %% [markdown]
-# ## 2. データ取得
-
-# %%
 # BigQueryからML特徴量ビュー（vw_ml_features）または結合データを取得するクエリ
 # 実際には dbt 等でビュー化しておく想定ですが、ここではクエリで生成します
 query = f"""
@@ -206,10 +176,6 @@ if df is None:
 # 確認表示
 display(df.head())
 
-# %% [markdown]
-# ## 3. 特徴量エンジニアリング
-
-# %%
 # 解析用データフレーム作成
 ml_df = df.copy()
 
@@ -245,6 +211,8 @@ ml_df['cost_progress_ratio'] = (
 ml_df['is_over_budget'] = (ml_df['actual_cost_rate'] > ml_df['target_cost_rate']).astype(int)
 
 # 欠損値の処理
+# 日付列は数値の0で埋められないため、先に削除する
+ml_df = ml_df.drop(columns=['start_date', 'end_date'], errors='ignore')
 ml_df = ml_df.fillna(0)
 # inf値の処理（0除算で発生する可能性）
 ml_df = ml_df.replace([np.inf, -np.inf], 0)
@@ -270,10 +238,6 @@ print(f"特徴量セット作成完了: {X.shape}")
 print(f"カラム: {X.columns.tolist()}")
 print(f"分類ターゲット分布: 予算内={sum(y_clf==0)}, 超過={sum(y_clf==1)}")
 
-# %% [markdown]
-# ## 4. モデル学習（XGBoost）
-
-# %%
 # 学習データとテストデータに分割 (80/20)
 # stratify=y_clf で分類ターゲットの比率を維持する
 X_train, X_test, y_reg_train, y_reg_test, y_clf_train, y_clf_test = train_test_split(
@@ -336,15 +300,23 @@ print(f"Test Precision: {precision:.4f}")
 print(f"Test Recall: {recall:.4f}")
 print(f"Test F1 Score: {f1:.4f}")
 
-# %% [markdown]
-# ## 5. モデル評価・可視化
-
-# %%
 # =====================================================
 # 可視化（日本語フォント設定済み）
 # =====================================================
+# %%
+# 可視化用のフォント・スタイル設定
 sns.set_theme(style="whitegrid")
-# japanize_matplotlib は setup_japanese_font() で設定済み
+
+# japanize_matplotlib を呼び出し、日本語フォントを適用 (セットアップセルで既に呼び出されています)
+import japanize_matplotlib
+japanize_matplotlib.japanize()
+
+# 明示的なフォント設定は japanize_matplotlib に任せます。以前の設定は競合を避けるため削除します。
+# plt.rcParams['font.sans-serif'] = ['Noto Sans CJK JP', 'Arial Unicode MS']
+# plt.rcParams['font.family'] = 'sans-serif'
+
+plt.rcParams['axes.unicode_minus'] = False # マイナス記号を正しく表示
+
 
 fig, axes = plt.subplots(2, 2, figsize=(16, 12))
 fig.suptitle('モデル評価ダッシュボード', fontsize=18, fontweight='bold')
@@ -456,7 +428,6 @@ plt.savefig('output_model_evaluation.png', dpi=150, bbox_inches='tight')
 plt.show()
 print("✅ 図表を保存: output_model_evaluation.png")
 
-# %%
 # =====================================================
 # SHAP詳細分析（Beeswarm Plot — 各特徴量の影響方向を可視化）
 # =====================================================
@@ -478,10 +449,6 @@ try:
 except Exception as e:
     print(f"⚠️ SHAP Beeswarm Plot をスキップ: {e}")
 
-# %% [markdown]
-# ## 6. 予測結果の出力
-
-# %%
 # 全データに対する予測とリスク評価
 ml_df['predicted_cost_rate'] = reg_model.predict(X)
 ml_df['over_budget_prob'] = clf_model.predict_proba(X)[:, 1]
@@ -546,24 +513,3 @@ display(styled_df)
 results_df.to_csv('cost_prediction_results.csv', index=False, encoding='utf-8-sig')
 print("✅ 予測結果を 'cost_prediction_results.csv' に保存しました。")
 
-# %% [markdown]
-# ## 7. モデルの考察と限界
-#
-# ### 重要な特徴量について
-# 特徴量重要度（Feature Importance）の分析から、以下の要素が原価着地の予測に強く寄与していることがわかります：
-# 1. **cost_progress_ratio (原価消化ペース vs 工期進捗):** 工期の進捗に対して原価がどれだけ先行して発生しているかが、最終的な赤字リスクの最大の先行指標です。
-# 2. **confirmed_ratio (確定比率):** 原価のうち、すでに支払・請求が確定している割合。未確定要素が多い初期段階ではリスクのブレ幅が大きくなります。
-# 3. **progress_rate (工事進捗率):** 工事の進み具合。後半になるほど予測精度は収束します。
-#
-# ### モデルの限界
-# 1. **データ量の不足とダミーデータの影響:** 今回はPoC用の生成データまたは少量のデータで学習しているため、実務で発生する特異な原価超過パターン（例：天候不良による工期遅延、資材価格の急激な高騰）を十分に捉えきれていません。
-# 2. **時系列ダイナミクスの欠如:** 現在のモデルは「ある時点」のスナップショット予測です。時系列での原価率の変化トレンド（例：先月急激に悪化したか）を特徴量として取り込んでいません。
-#
-# ### 本番運用に向けた改善提案
-# 1. **原価内訳の時系列変化の組み込み:** 日次/週次での原価実績の推移をRNN/LSTM等でモデル化する、もしくは「過去1ヶ月の変化率」を特徴量に追加する。
-# 2. **外部データの統合:** 資材価格インデックス（鋼材・コンクリート等）や気象データ、協力業者の稼働状況などを特徴量に加えることで、外的要因によるリスクを検知。
-# 3. **現場担当者による補正入力:** MLの予測値に対して、現場担当者が定性的なリスク要因（現場特有の難所など）を加味できるような「Human-in-the-loop」の仕組みの導入。
-#
-# ### ビジネスへのインパクト
-# この予測モデルをDXコックピットに組み込むことで、**「事後報告型の原価管理」から「予測型のプロアクティブなリスクマネジメント」**へと移行できます。
-# リスクスコアが閾値（例: 75以上）を超えたプロジェクトを自動検知し、経営層や部門長にアラートを上げることで、取り返しがつかなくなる前にテコ入れ（人員増強、工法見直し、協力業者との再交渉）を行うことが可能になります。
