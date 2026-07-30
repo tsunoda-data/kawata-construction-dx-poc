@@ -126,7 +126,8 @@ def generate_mock_data():
 if USE_BIGQUERY:
     query_in = f"SELECT deposit_month, sum(expected_amount_kpy) as inflow FROM `{PROJECT_ID}.{DATASET}.cash_in_schedules` GROUP BY 1 ORDER BY 1"
     df_in = bq_client.query(query_in).to_dataframe()
-    query_cost = f"SELECT payment_due_month as month, category, sum(amount_kpy) as amount FROM `{PROJECT_ID}.{DATASET}.cost_records` GROUP BY 1, 2 ORDER BY 1"
+    # ★ alias名を amount_kpy に統一（pivot_table と整合させる）
+    query_cost = f"SELECT payment_due_month, category, sum(amount_kpy) as amount_kpy FROM `{PROJECT_ID}.{DATASET}.cost_records` GROUP BY 1, 2 ORDER BY 1"
     df_cost_raw = bq_client.query(query_cost).to_dataframe()
 else:
     df_in_raw, df_cost_raw = generate_mock_data()
@@ -134,8 +135,17 @@ else:
     df_in = df_in_raw.groupby('deposit_month')['expected_amount_kpy'].sum().reset_index()
     df_in.columns = ['month', 'inflow']
 
-# 出金データの集計（カテゴリ別）
-df_cost_cat = df_cost_raw.pivot_table(index='payment_due_month', columns='category', values='amount_kpy', aggfunc='sum').fillna(0)
+# ★ 両パスで index列 = 'payment_due_month', values列 = 'amount_kpy' に統一
+# BigQueryパスのdf_cost_rawも payment_due_month カラムを持つ
+if USE_BIGQUERY:
+    # BQパス: deposit_month という列名になっている可能性があるため確認して統一
+    if 'month' in df_cost_raw.columns and 'payment_due_month' not in df_cost_raw.columns:
+        df_cost_raw = df_cost_raw.rename(columns={'month': 'payment_due_month'})
+
+df_cost_cat = df_cost_raw.pivot_table(
+    index='payment_due_month', columns='category',
+    values='amount_kpy', aggfunc='sum'
+).fillna(0)
 df_cost = pd.DataFrame({'outflow': df_cost_cat.sum(axis=1)}).reset_index()
 df_cost.rename(columns={'payment_due_month': 'month'}, inplace=True)
 
@@ -240,6 +250,12 @@ X_scaled = scaler.fit_transform(X)
 # Isolation Forestの学習
 # contamination: データセット内に含まれる異常値の割合（今回は10%を想定）
 iso_forest = IsolationForest(contamination=0.1, random_state=42, n_estimators=100)
+
+# 特徴量カラムをdf_cfにもコピー（後続の表示で使用するため）
+for col in ['mom_change', 'inflow_outflow_ratio', 'diff_from_3m_avg', 'rolling_3m_avg']:
+    if col in df_features.columns:
+        df_cf[col] = df_features[col].values
+
 df_cf['anomaly_label'] = iso_forest.fit_predict(X_scaled)
 
 # 異常スコアの算出（負の値が大きいほど異常度が高い）

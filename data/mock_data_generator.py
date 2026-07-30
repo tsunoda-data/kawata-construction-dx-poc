@@ -107,7 +107,8 @@ def generate_cost_records(projects_df, num_records=800):
     statuses = ["確定請求", "現場見込み", "口頭発注"]
     
     # 異常検知(AI)用に一部のプロジェクトを赤字（原価率オーバー）にする
-    over_budget_projects = random.sample(projects_df["project_id"].tolist(), int(len(projects_df) * 0.15))
+    # 建設業界の実態: 赤字工事は全体の20-30%程度
+    over_budget_projects = random.sample(projects_df["project_id"].tolist(), int(len(projects_df) * 0.22))
     
     vendors = [f"協力業者{chr(65+i)}社" for i in range(20)] + [f"資材メーカー{chr(65+i)}" for i in range(10)]
     
@@ -137,11 +138,18 @@ def generate_cost_records(projects_df, num_records=800):
         
         # プロジェクト規模に応じた金額感 (1件あたり)
         base_amount = (project["contract_amount_kpy"] * (project["target_cost_rate"] / 100)) / (num_records / len(projects_df))
-        amount = int(base_amount * np.random.lognormal(0, 0.5) * season_factor)
         
-        # 赤字プロジェクトの場合、後半のコストが跳ね上がる
+        # ★ 正常工事と赤字工事で原価発生パターンを分離
+        if project_id in over_budget_projects:
+            # 赤字工事: 原価が目標を超過する（lognormal期待値 ≈ 1.08）
+            amount = int(base_amount * np.random.lognormal(0.05, 0.25) * season_factor)
+        else:
+            # 正常工事: 原価が目標内に収まる（lognormal期待値 ≈ 0.76）
+            amount = int(base_amount * np.random.lognormal(-0.3, 0.2) * season_factor)
+        
+        # 赤字プロジェクトの場合、工期後半でコストが膨らむ（追加人員・手戻り等）
         if project_id in over_budget_projects and (accrual_date - start_date).days > (end_date - start_date).days * 0.7:
-            amount = int(amount * 1.8)
+            amount = int(amount * 1.3)
             
         status = np.random.choice(statuses, p=[0.7, 0.2, 0.1])
         vendor_name = random.choice(vendors)
@@ -400,13 +408,13 @@ def main():
     
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
-    # 1. 建設プロジェクトマスタ
-    projects_df = generate_projects_master(50)
+    # 1. 建設プロジェクトマスタ（200件: ML学習に十分なデータ量）
+    projects_df = generate_projects_master(200)
     projects_df.to_csv(os.path.join(OUTPUT_DIR, "projects_master.csv"), index=False, encoding="utf-8-sig")
     print("- projects_master.csv を作成しました。")
     
-    # 2. 原価トランザクション
-    cost_records_df = generate_cost_records(projects_df, 600)
+    # 2. 原価トランザクション（2000件: プロジェクトあたり平均約10件）
+    cost_records_df = generate_cost_records(projects_df, 2000)
     cost_records_df.to_csv(os.path.join(OUTPUT_DIR, "cost_records.csv"), index=False, encoding="utf-8-sig")
     print("- cost_records.csv を作成しました。")
     
