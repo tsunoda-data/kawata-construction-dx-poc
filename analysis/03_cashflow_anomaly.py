@@ -6,6 +6,14 @@
 # 機械学習（Isolation Forest）を用いて不自然なキャッシュフロー変動（異常値）を検知します。
 # さらにARIMAモデルによる将来のキャッシュフロー予測を行い、資金ショートのリスクを早期にアラートする仕組みを検証します。
 
+# %% [markdown]
+# # キャッシュフロー異常検知
+# ## 加和太建設 DXコックピット PoC — Step 3b
+#
+# 目的: 入出金データ（売上入金・原価支払）から月次のキャッシュフローを算出し、
+# 機械学習（Isolation Forest）を用いて不自然なキャッシュフロー変動（異常値）を検知します。
+# さらにARIMAモデルによる将来のキャッシュフロー予測を行い、資金ショートのリスクを早期にアラートする仕組みを検証します。
+
 # %%
 # 必要なライブラリのインストールとインポート
 import os
@@ -44,9 +52,9 @@ japanize_matplotlib.japanize()
 
 # %%
 # === 設定 ===
-PROJECT_ID = 'your-project-id'  # ← 実際のGCPプロジェクトIDに変更してください
-DATASET = 'kawata_dx_poc'       # ← データセット名
-USE_BIGQUERY = False            # BigQueryを使用する場合はTrueに変更
+PROJECT_ID = 'kawata-dx-poc'      # ← GCPプロジェクトID
+DATASET = 'kawata_dx_cockpit'     # ← BigQueryデータセット名
+USE_BIGQUERY = True            # BigQueryを使用する場合はTrueに変更
 
 def setup_bigquery():
     """BigQueryの認証とクライアントの初期化 (Colab用)"""
@@ -126,6 +134,7 @@ def generate_mock_data():
 if USE_BIGQUERY:
     query_in = f"SELECT deposit_month, sum(expected_amount_kpy) as inflow FROM `{PROJECT_ID}.{DATASET}.cash_in_schedules` GROUP BY 1 ORDER BY 1"
     df_in = bq_client.query(query_in).to_dataframe()
+    df_in = df_in.rename(columns={'deposit_month': 'month'})
     # ★ alias名を amount_kpy に統一（pivot_table と整合させる）
     query_cost = f"SELECT payment_due_month, category, sum(amount_kpy) as amount_kpy FROM `{PROJECT_ID}.{DATASET}.cost_records` GROUP BY 1, 2 ORDER BY 1"
     df_cost_raw = bq_client.query(query_cost).to_dataframe()
@@ -199,20 +208,26 @@ ax2.set_title('累計キャッシュフロー推移（資金残高シミュレ�
 ax2.set_ylabel('累計額 (千円)', fontsize=12)
 ax2.legend(loc='upper left')
 
+
 # 3. 支払内訳（カテゴリ別積上げ棒グラフ）
 ax3 = axes[2]
 bottom = np.zeros(len(df_cf))
-df_cost_cat_sorted = df_cost_cat.sort_index()
-for col in df_cost_cat_sorted.columns:
-    ax3.bar(df_cf['month'], df_cost_cat_sorted[col].values, bottom=bottom, label=col, width=20)
-    bottom += df_cost_cat_sorted[col].values
+
+# ★ 追加: df_cost_cat の日付インデックスを df_cf['month'] の全月に合わせて整形（不足している月は 0 で埋める）
+df_cost_cat_aligned = df_cost_cat.copy()
+df_cost_cat_aligned.index = pd.to_datetime(df_cost_cat_aligned.index)
+df_cost_cat_aligned = df_cost_cat_aligned.reindex(df_cf['month']).fillna(0)
+
+for col in df_cost_cat_aligned.columns:
+    ax3.bar(df_cf['month'], df_cost_cat_aligned[col].values, bottom=bottom, label=col, width=20)
+    bottom += df_cost_cat_aligned[col].values
+
 ax3.set_title('出金カテゴリ別内訳（積上げ棒グラフ）', fontsize=16)
 ax3.set_ylabel('金額 (千円)', fontsize=12)
 ax3.legend(loc='upper left', bbox_to_anchor=(1.01, 1))
 
 plt.tight_layout()
 plt.show()
-
 # %% [markdown]
 # ## 4. Isolation Forestによる異常検知
 # 以下の特徴量を生成し、Isolation Forestを用いて月次のキャッシュフローが「異常（いつもと違うパターン）」であるかを検知します。
