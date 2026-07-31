@@ -49,12 +49,16 @@ def random_date(start, end):
 
 def generate_projects_master(num_projects=50):
     """建設プロジェクトマスタデータの生成"""
+    # PM名のリスト（Looker Studio表示用）
+    pm_names = ["田中太郎", "鈴木花子", "佐藤健一", "山本美咲", "渡辺大輔",
+                "伊藤裕子", "中村誠", "小林由紀", "加藤浩二", "松田真美"]
     data = []
     for i in range(1, num_projects + 1):
         project_id = f"PRJ-{str(i).zfill(4)}"
         division = random.choice(DIVISIONS)
         client_type = random.choice(CLIENT_TYPES)
         city = random.choice(CITIES)
+        pm_name = random.choice(pm_names)
         
         if division == "土木":
             name_suffix = random.choice(["道路改良工事", "河川改修工事", "橋梁補修工事", "下水道整備工事"])
@@ -89,13 +93,13 @@ def generate_projects_master(num_projects=50):
         data.append([
             project_id, project_name, division, client_type, 
             contract_amount, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"), 
-            round(target_cost_rate, 2), round(progress_rate, 2), status
+            round(target_cost_rate, 2), round(progress_rate, 2), status, pm_name
         ])
         
     df = pd.DataFrame(data, columns=[
         "project_id", "project_name", "division", "client_type", 
         "contract_amount_kpy", "start_date", "end_date", 
-        "target_cost_rate", "progress_rate", "status"
+        "target_cost_rate", "progress_rate", "status", "pm_name"
     ])
     return df
 
