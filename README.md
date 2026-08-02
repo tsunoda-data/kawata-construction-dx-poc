@@ -71,12 +71,12 @@ kawata-construction-dx-poc/
 │   ├── 📄 cost_records.csv             # 原価トランザクション（生成済み）
 │   └── ... (その他CSV)
 │
-├── 📁 analysis/                        # Jupyter Notebook（予定）
+├── 📁 analysis/                        # Jupyter Notebook
 │   ├── 📓 01_eda.ipynb                 # 探索的データ分析
 │   ├── 📓 02_cost_prediction.ipynb     # 原価予測モデル
 │   └── 📓 03_cashflow_anomaly.ipynb    # キャッシュフロー異常検知
 │
-└── 📁 dashboard/                       # ダッシュボード設計（予定）
+└── 📁 dashboard/                       # ダッシュボード設計
     └── 📄 looker_studio_design.md
 ```
 
@@ -156,10 +156,9 @@ python data/mock_data_generator.py
 
 ## 👤 Author
 
-**[Your Name]**
-- CRMマーケター → データストラテジスト / データサイエンティスト転身
-- SIGNATEブートキャンプ修了 / まなびDXクエスト受講
-- 専門: データ戦略設計、機械学習、BIダッシュボード構築
+**[Tsunoda]**
+- CRMマーケター  データストラテジスト / データサイエンティスト
+- SIGNATEブートキャンプ修了 / まなびDXクエスト受講予定
 
 ---
 
@@ -169,4 +168,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-> **本プロジェクトは、経済産業省「まなびDXクエスト」地域企業協働プログラムへの応募に際し、ポートフォリオとして作成したものです。**
+> **本プロジェクトは、ポートフォリオとして作成したものです。**
