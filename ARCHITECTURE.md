@@ -13,10 +13,9 @@
 ### 2.1 全体システムアーキテクチャ
 データの発生源から、蓄積、AIによる分析、そして可視化・レポーティングに至るデータフローの全体像です。
 
-```mermaid
 graph TD
     %% Data Sources
-    subgraph データソース層
+    subgraph data_sources ["データソース層"]
         IC[IMPACT CONSTRUCTION]
         SC[SCALE]
         AS[AppSheet<br/>現場入力/予兆データ]
@@ -25,7 +24,7 @@ graph TD
     end
 
     %% Ingestion & Orchestration
-    subgraph パイプライン・オーケストレーション層
+    subgraph orchestration ["パイプライン・オーケストレーション層"]
         CF[Cloud Functions]
         CS[Cloud Scheduler]
         CS -->|トリガー| CF
@@ -37,13 +36,13 @@ graph TD
     end
 
     %% Data Warehouse
-    subgraph データ基盤層
+    subgraph dwh ["データ基盤層"]
         BQ[(BigQuery)]
         CF -->|ELT処理| BQ
     end
 
     %% AI & ML
-    subgraph AI/ML層
+    subgraph ai_ml ["AI/ML層"]
         VA[Vertex AI<br/>AutoML / Custom Model]
         GM[Gemini API<br/>自然言語レポート]
         BQ <-->|学習/推論| VA
@@ -51,14 +50,13 @@ graph TD
     end
 
     %% Visualization
-    subgraph 可視化・活用層
+    subgraph visualization ["可視化・活用層"]
         LS[Looker Studio]
         WS[Google Workspace<br/>Docs/Chat通知]
         BQ -->|ダッシュボード| LS
         VA -->|予測結果| BQ
         GM -->|レポート| WS
     end
-```
 
 ### 2.2 セキュリティ・アクセス制御アーキテクチャ
 
