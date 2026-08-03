@@ -150,7 +150,6 @@ python data/mock_data_generator.py
 
 <img width="1384" height="1184" alt="Unknown-5" src="https://github.com/user-attachments/assets/90015b86-5348-4c65-8652-932c63677f0f" />
 
-<img width="1147" height="526" alt="Unknown-6" src="https://github.com/user-attachments/assets/52404538-f7e3-4ce8-bc82-a35371c4fa1c" />
 
 <img width="1147" height="526" alt="Unknown-6" src="https://github.com/user-attachments/assets/1ea49b1f-45dd-4785-bd71-72d889545774" />
 
@@ -158,7 +157,7 @@ python data/mock_data_generator.py
 
 <img width="1095" height="784" alt="Unknown-8" src="https://github.com/user-attachments/assets/8000806b-e475-4361-a12d-499578494511" />
 
-![Uploading スクリーンショット 2026-08-03 9.06.57.png…]()
+
 
 ---
 
