@@ -1,6 +1,9 @@
 # 加和太建設 マルチドメインDXコックピット PoC システムアーキテクチャ設計書
 
-## 1. アーキテクチャ概要
+> **Document Version:** 2.0 — PoC実装反映済
+> **Last Updated:** 2026-08-02  
+> **主要変更点:** BigQuery喳一データセット構成に変更、ビュー7本に増加、テーブルスキーマ実装値に更新
+
 加和太建設（建設、不動産、施設運営、SaaS、エリアマネジメント）の多様な事業領域のデータを統合し、データドリブンな経営判断を支援する「マルチドメインDXコックピット」のアーキテクチャ設計です。既存のGoogle Workspace環境を最大限に活用し、Google Cloud（GCP）のデータ基盤・AIサービスを中核としたスケーラブルな構成を採用しています。
 
 本アーキテクチャは、以下の3つの戦略的テーマの実現を目的としています：
@@ -16,7 +19,7 @@
 ```mermaid
 graph TD
     %% Data Sources
-    subgraph data_sources ["データソース層"]
+    subgraph データソース層
         IC[IMPACT CONSTRUCTION]
         SC[SCALE]
         AS[AppSheet<br/>現場入力/予兆データ]
@@ -25,7 +28,7 @@ graph TD
     end
 
     %% Ingestion & Orchestration
-    subgraph orchestration ["パイプライン・オーケストレーション層"]
+    subgraph パイプライン・オーケストレーション層
         CF[Cloud Functions]
         CS[Cloud Scheduler]
         CS -->|トリガー| CF
@@ -37,13 +40,13 @@ graph TD
     end
 
     %% Data Warehouse
-    subgraph dwh ["データ基盤層"]
+    subgraph データ基盤層
         BQ[(BigQuery)]
         CF -->|ELT処理| BQ
     end
 
     %% AI & ML
-    subgraph ai_ml ["AI/ML層"]
+    subgraph AI/ML層
         VA[Vertex AI<br/>AutoML / Custom Model]
         GM[Gemini API<br/>自然言語レポート]
         BQ <-->|学習/推論| VA
@@ -51,7 +54,7 @@ graph TD
     end
 
     %% Visualization
-    subgraph visualization ["可視化・活用層"]
+    subgraph 可視化・活用層
         LS[Looker Studio]
         WS[Google Workspace<br/>Docs/Chat通知]
         BQ -->|ダッシュボード| LS
@@ -105,16 +108,36 @@ graph LR
 
 ## 4. データ基盤層（BigQuery）
 
-事業部ごとのデータサイロを解消し、統合的な分析を可能にするため、BigQuery上に論理的なデータセットを構築します。
+> **PoC実装決定:** データ管理のシンプル化のため、**喳一データセット `{PROJECT_ID}.kawata_dx_cockpit`** に全テーブルを集約。
+> Phase 2以降にデータ量・権限要件が複雑化した際に複数データセット分割を検討する。
 
-| データセット名 | 用途・格納データ |
-|---|---|
-| `construction` | 工事マスタ、実行予算、実績原価、入出金トラッキング |
-| `real_estate` | 物件マスタ、テナント情報、賃貸収入実績、不動産取引データ |
-| `facility_ops` | 道の駅等の施設別来場者数、POS売上データ、顧客セグメント |
-| `saas_metrics` | IMPACT CONSTRUCTION / SCALEのユーザー数、MRR、チャーンレート、機能利用頻度 |
-| `area_management` | 特定エリアごとの事業横断指標、地域人口動態、地価推移、地域イベント効果 |
-| `cross_domain` | まちづくりROIや全社KPI集約用の中間テーブル・データマート。Looker Studioの直接の参照先 |
+### 4.1 ベーステーブル
+
+| テーブル名 | 話達データ | 主要カラム |
+|:---|:---|:---|
+| `projects_master` | 工事マスタ | `project_id`, `contract_amount_kpy`, `target_cost_rate`, `progress_rate`, `pm_name` |
+| `cost_records` | 原価トランザクション | `project_id`, `category`, `amount_kpy`, `status`, `payment_due_month` |
+| `cash_in_schedules` | 入金スケジュール | `project_id`, `expected_amount_kpy`, `actual_amount_kpy`, `deposit_month`, `status` |
+| `real_estate_properties` | 不動産物件マスタ | `location`, `acquisition_cost_kpy`, `current_value_kpy`, `monthly_rental_income_kpy`, `occupancy_rate` |
+| `facility_operations` | 施設月次運営実績 | `facility_name`, `month`, `visitors`, `revenue_kpy`, `operating_profit_kpy` |
+| `saas_metrics` | SaaS事業KPI月次 | `product`, `month`, `mrr_kpy`, `customers`, `churn_rate` |
+| `area_indicators` | エリア指標月次 | `area_name`, `month`, `land_price_index`, `population`, `foot_traffic` |
+
+> 完全なカラム定義・英日対照表 → [`docs/column_dictionary.md`](./docs/column_dictionary.md)
+
+### 4.2 分析ビュー（Looker Studio 直接参照先）
+
+| ビュー名 | 用途 | Lookerページ |
+|:---|:---|:---|
+| `vw_company_dashboard` | 全社売上・利益率・進行中工事数・手元資金の月次集計 | Page 1 |
+| `vw_area_roi` | エリア別投資總額・ROI率・事業別売上の横断集計 | Page 2 |
+| `vw_area_indicators` ★ | エリア指標（地価・人口・歩行者数）の月次推移。`indicator_month` はDATE型 | Page 2 |
+| `vw_project_cost_summary` | 工事別原価・粗利・PM名・リスクレベル | Page 3 |
+| `vw_cost_category_detail` ★ | 外注費/材料費/労務費/経費のカテゴリ別予実比較。ドーナツ・棒グラフ用 | Page 3 |
+| `vw_cashflow_forecast` | 期首/期末残高・入出金・資金ショートフラグ。`cf_date` はDATE型 | Page 4 |
+| `vw_ml_features` | XGBoost学習用特徴量ビュー（`actual_cost_rate`ターゲット） | ML学習用 |
+
+> ビューのSQL定義全文 → [`sql/01_views.sql`](./sql/01_views.sql)
 
 ## 5. AI/ML層（Vertex AI）
 
