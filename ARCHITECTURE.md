@@ -17,27 +17,20 @@
 データの発生源から、蓄積、AIによる分析、そして可視化・レポーティングに至るデータフローの全体像です。
 
 ```mermaid
-Unable to render rich display
-
-Lexical error on line 9. Unrecognized text.
-... subgraph パイプライン・オーケストレーション層
-----------------------^
-
-For more information, see https://docs.github.com/get-started/writing-on-github/working-with-advanced-formatting/creating-diagrams#creating-mermaid-diagrams
 graph TD
     %% Data Sources
-    subgraph データソース層
-        IC[IMPACT CONSTRUCTION]
-        SC[SCALE]
-        AS[AppSheet<br/>現場入力/予兆データ]
-        GW[Google Sheets<br/>不動産/施設運営]
-        EX[外部データ<br/>天候/資材価格指数]
+    subgraph layer_sources ["データソース層"]
+        IC["IMPACT CONSTRUCTION"]
+        SC["SCALE"]
+        AS["AppSheet<br/>現場入力/予兆データ"]
+        GW["Google Sheets<br/>不動産/施設運営"]
+        EX["外部データ<br/>天候/資材価格指数"]
     end
 
     %% Ingestion & Orchestration
-    subgraph パイプライン・オーケストレーション層
-        CF[Cloud Functions]
-        CS[Cloud Scheduler]
+    subgraph layer_pipeline ["パイプライン・オーケストレーション層"]
+        CF["Cloud Functions"]
+        CS["Cloud Scheduler"]
         CS -->|トリガー| CF
         IC -.->|API連携| CF
         SC -.->|API連携| CF
@@ -47,23 +40,23 @@ graph TD
     end
 
     %% Data Warehouse
-    subgraph データ基盤層
-        BQ[(BigQuery)]
+    subgraph layer_dw ["データ基盤層"]
+        BQ[("BigQuery")]
         CF -->|ELT処理| BQ
     end
 
     %% AI & ML
-    subgraph AI/ML層
-        VA[Vertex AI<br/>AutoML / Custom Model]
-        GM[Gemini API<br/>自然言語レポート]
+    subgraph layer_aiml ["AI/ML層"]
+        VA["Vertex AI<br/>AutoML / Custom Model"]
+        GM["Gemini API<br/>自然言語レポート"]
         BQ <-->|学習/推論| VA
         BQ -->|プロンプト構築| GM
     end
 
     %% Visualization
-    subgraph 可視化・活用層
-        LS[Looker Studio]
-        WS[Google Workspace<br/>Docs/Chat通知]
+    subgraph layer_vis ["可視化・活用層"]
+        LS["Looker Studio"]
+        WS["Google Workspace<br/>Docs/Chat通知"]
         BQ -->|ダッシュボード| LS
         VA -->|予測結果| BQ
         GM -->|レポート| WS
