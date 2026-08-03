@@ -17,6 +17,13 @@
 データの発生源から、蓄積、AIによる分析、そして可視化・レポーティングに至るデータフローの全体像です。
 
 ```mermaid
+Unable to render rich display
+
+Lexical error on line 9. Unrecognized text.
+... subgraph パイプライン・オーケストレーション層
+----------------------^
+
+For more information, see https://docs.github.com/get-started/writing-on-github/working-with-advanced-formatting/creating-diagrams#creating-mermaid-diagrams
 graph TD
     %% Data Sources
     subgraph データソース層
