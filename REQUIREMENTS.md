@@ -2,7 +2,7 @@
 
 > **Document Version:** 3.0  
 > **Last Updated:** 2026-08-02  
-> **Author:** [Your Name] — Data Strategist  
+> **Author:** [Tsunoda] — Data Strategist  
 > **Status:** PoC Implementation Complete  
 > **Repository:** [kawata-construction-dx-poc](https://github.com/your-username/kawata-construction-dx-poc)
 
@@ -771,6 +771,6 @@ Phase 4: 統合テスト・改善       [Week 8-10] ░░░░░░░░░�
 
 ---
 
-> **本要件定義書は、まなびDXクエスト 地域企業協働プログラムへの応募に際し、加和太建設株式会社のDX課題に対するデータストラテジストとしての提案を文書化したものです。**
+> **本要件定義書は、ポートフォリオとして作成したものです。**
 >
 > **© 2026 [Your Name]. This document is part of the kawata-construction-dx-poc portfolio.**
