@@ -7,23 +7,7 @@
 [![Tech](https://img.shields.io/badge/Tech-BigQuery%20%7C%20Vertex%20AI%20%7C%20Looker%20Studio-orange)](ARCHITECTURE.md)
 
 ---
-## AIをパートナーにした開発プロセス（AI-Driven PoC）
 
-本プロジェクトは、生成AI（LLM）を「共同開発パートナー・データエンジニア」として活用し、企画構想・データ設計・BigQuery SQL構築・Looker Studioダッシュボード設計・Pythonスクリプト作成までを包括的に実施した建設DXのPoC（概念実証）です。
-
-* **データモデリング＆SQL作成**: データ構造の設計および分析ビュー（6種）のクエリ自動生成・最適化
-* **データ生成＆処理**: Pythonによる疑似ビジネスデータの自動生成スクリプト作成およびColab環境での処理
-* **UI/UX設計**: Looker Studioにおける効率的な指標（KPI）配置や可視化手順の導出
-
----
-
-## 免責事項（Disclaimer）
-
-本リポジトリに含まれるコード、データ、設計書、およびダッシュボード構成は、**個人のポートフォリオ・技術検証（PoC）目的で作成された架空のサンプル**です。
-
-* 実在する加和太建設株式会社様、およびその他の関連企業様・団体とは**一切関係ありません**。
-* 使用している数値データ（売上、原価、キャッシュフロー等）はすべてスクリプトによって自動生成された**ダミーデータ**であり、実際の企業の財務・事業データを示すものではありません。
-* 
 ## 📌 プロジェクト概要
 
 本プロジェクトは、静岡県三島市を拠点とする**加和太建設株式会社**（売上157億円、従業員306名）の多角化経営を支えるデータ基盤のPoC（概念実証）です。
@@ -161,14 +145,45 @@ python data/mock_data_generator.py
 
 ---
 
-## 📝 背景・思考プロセス
+## 📝 作成データ
+<img width="1584" height="1142" alt="Unknown-2" src="https://github.com/user-attachments/assets/e32fe708-e88a-4566-ab0c-ba6b2a577d4a" />
 
-本プロジェクトの着想から設計に至る思考プロセスは、noteで詳しく解説しています。
-技術ドキュメント（本リポジトリ）と合わせてご覧ください。
+<img width="1384" height="1184" alt="Unknown-5" src="https://github.com/user-attachments/assets/90015b86-5348-4c65-8652-932c63677f0f" />
 
-👉 **[note記事：なぜ「経営ダッシュボード」ではなく「まちづくりROI」を提案するのか](https://note.com/your-username/kawata-dx-poc)**
+<img width="1147" height="526" alt="Unknown-6" src="https://github.com/user-attachments/assets/52404538-f7e3-4ce8-bc82-a35371c4fa1c" />
+
+<img width="1147" height="526" alt="Unknown-6" src="https://github.com/user-attachments/assets/1ea49b1f-45dd-4785-bd71-72d889545774" />
+
+<img width="1383" height="982" alt="Unknown-7" src="https://github.com/user-attachments/assets/1887afc3-9148-4d01-9153-d46d6146490d" />
+
+<img width="1095" height="784" alt="Unknown-8" src="https://github.com/user-attachments/assets/8000806b-e475-4361-a12d-499578494511" />
+
+![Uploading スクリーンショット 2026-08-03 9.06.57.png…]()
 
 ---
+
+## 📝 背景・思考プロセス
+
+本プロジェクトの着想から設計に至る思考プロセスは、noteで詳しく解説予定です**
+
+
+---
+## 🤖 AIをパートナーにした開発プロセス（AI-Driven PoC）
+
+本プロジェクトは、生成AI（LLM）を「共同開発パートナー・データエンジニア」として活用し、企画構想・データ設計・BigQuery SQL構築・Looker Studioダッシュボード設計・Pythonスクリプト作成までを包括的に実施した建設DXのPoC（概念実証）です。
+
+* **データモデリング＆SQL作成**: データ構造の設計および分析ビュー（6種）のクエリ自動生成・最適化
+* **データ生成＆処理**: Pythonによる疑似ビジネスデータの自動生成スクリプト作成およびColab環境での処理
+* **UI/UX設計**: Looker Studioにおける効率的な指標（KPI）配置や可視化手順の導出
+
+---
+
+## ⚠️ 免責事項（Disclaimer）
+
+本リポジトリに含まれるコード、データ、設計書、およびダッシュボード構成は、**個人のポートフォリオ・技術検証（PoC）目的で作成された架空のサンプル**です。
+
+* 実在する加和太建設株式会社様、川田建設株式会社様、およびその他の関連企業様・団体とは**一切関係ありません**。
+* 使用している数値データ（売上、原価、キャッシュフロー等）はすべてスクリプトによって自動生成された**ダミーデータ**であり、実際の企業の財務・事業データを示すものではありません。
 
 ## 👤 Author
 
