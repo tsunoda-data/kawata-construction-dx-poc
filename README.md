@@ -157,13 +157,14 @@ python data/mock_data_generator.py
 
 <img width="1095" height="784" alt="Unknown-8" src="https://github.com/user-attachments/assets/8000806b-e475-4361-a12d-499578494511" />
 
+<img width="752" height="565" alt="スクリーンショット 2026-08-03 9 07 13" src="https://github.com/user-attachments/assets/46e56fd9-435c-4032-b711-b3b2bb32a808" />
 
 
 ---
 
 ## 📝 背景・思考プロセス
 
-本プロジェクトの着想から設計に至る思考プロセスは、noteで詳しく解説予定です**
+本プロジェクトの着想から設計に至る思考プロセスは、noteで詳しく解説予定です。
 
 
 ---
