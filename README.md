@@ -197,6 +197,7 @@ SaaS事業: 建設業向けSaaSは地域建設ネットワークを通じて着�
 ## 📝 背景・思考プロセス
 
 本プロジェクトの着想から設計に至る思考プロセスは、noteで詳しく解説しています。
+
  [note](https://note.com/tsunoda_data/n/n57e339867ee2?sub_rt=share_pw)
 ---
 ## 🤖 AIをパートナーにした開発プロセス（AI-Driven PoC）
